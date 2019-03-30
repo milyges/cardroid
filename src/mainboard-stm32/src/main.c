@@ -5,6 +5,7 @@
 #include "displayemu.h"
 #include "rtc.h"
 #include "cdcemu.h"
+#include "pilot.h"
 #include <string.h>
 
 #define SHUTDOWN_TIME    10 /* Czas do wysłania do odroida żądania zamknięcia systemu */
@@ -33,8 +34,8 @@ void SysTick_Handler(void) {
 
 int main(void) {
 	char cmd[64];
-	uint8_t oldignon = 0, oldradioon = 0;
-	uint8_t ignon, radioon;
+	uint8_t oldignon = 0, oldradioon = 0, oldkey = 0;
+	uint8_t ignon, radioon, key;
 	time_t shutdown_time;
 
 	SysTick_Config(SystemCoreClock / 100);
@@ -55,6 +56,7 @@ int main(void) {
 	power_odroid_set(ENABLE); /* Włączamy zasilanie odroida */
 
 	displayemu_init(); /* Emulator wyświetlacza */
+	pilot_init();
 
 	while(1) {
 		if (usart_readcommand(cmd, sizeof(cmd))) { /* Nowe polecenie */
@@ -114,6 +116,44 @@ int main(void) {
 			}
 			while(1);
 		}
+
+		key = pilot_getkey();
+		if (oldkey != key) {
+			if ((key & PILOT_KEY_SOURCE_L) == PILOT_KEY_SOURCE_L) {
+				//uprintf("+DEBUG: PILOT_KEY_SOURCE_L\n");
+				displayemu_sendkey(DISPLAY_KEY_SRC_LEFT);
+			}
+			else if ((key & PILOT_KEY_SOURCE_R) == PILOT_KEY_SOURCE_R) {
+				//uprintf("+DEBUG: PILOT_KEY_SOURCE_R\n");
+				displayemu_sendkey(DISPLAY_KEY_SRC_RIGHT);
+			}
+			else if ((key & PILOT_KEY_LOAD) == PILOT_KEY_LOAD) {
+				//uprintf("+DEBUG: PILOT_KEY_LOAD\n");
+				displayemu_sendkey(DISPLAY_KEY_LOAD);
+			}
+			else if ((key & PILOT_KEY_VOLUP) == PILOT_KEY_VOLUP) {
+				//uprintf("+DEBUG: PILOT_KEY_VOLUP\n");
+				displayemu_sendkey(DISPLAY_KEY_VOLUME_UP);
+			}
+			else if ((key & PILOT_KEY_VOLDOWN) == PILOT_KEY_VOLDOWN) {
+				//uprintf("+DEBUG: PILOT_KEY_VOLDOWN\n");
+				displayemu_sendkey(DISPLAY_KEY_VOLUME_DOWN);
+			}
+			else if ((key & PILOT_KEY_PAUSE) == PILOT_KEY_PAUSE) {
+				//uprintf("+DEBUG: PILOT_KEY_PAUSE\n");
+				displayemu_sendkey(DISPLAY_KEY_PAUSE);
+			}
+			else if ((key & PILOT_ROLL_NEXT) == PILOT_ROLL_NEXT) {
+				//uprintf("+DEBUG: PILOT_ROLL_NEXT\n");
+				displayemu_sendkey(DISPLAY_KEY_ROLL_DOWN);
+			}
+			else if ((key & PILOT_ROLL_PREV) == PILOT_ROLL_PREV) {
+				//uprintf("+DEBUG: PILOT_ROLL_NEXT\n");
+				displayemu_sendkey(DISPLAY_KEY_ROLL_UP);
+			}
+			oldkey = key;
+		}
+
 		//__WFE();
 	}
 }

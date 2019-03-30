@@ -22,6 +22,7 @@
 #define DISPLAY_KEY_ROLL_DOWN      0x0141
 #define DISPLAY_KEY_HOLD_MASK (0x80 | 0x40)
 
+void displayemu_sendkey(uint16_t key);
 void displayemu_tick(void);
 void displayemu_refresh(void);
 void displayemu_init(void);

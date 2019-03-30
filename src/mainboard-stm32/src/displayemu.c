@@ -275,6 +275,11 @@ void displayemu_tick(void) {
 	}
 }
 
+void displayemu_sendkey(uint16_t key) {
+	_display_can_send(CAN_ID_KEY_PRESSED, (uint8_t []){ 0x03, 0x89, (key >> 8), (key & 0xFF),
+	                  DISPLAY_FILL_BYTE, DISPLAY_FILL_BYTE, DISPLAY_FILL_BYTE, DISPLAY_FILL_BYTE });
+}
+
 /* Wysyłamy jeszcze raz wszystkie dane do odroida (potrzebne po bootowaniu, po zwisie aplikacji, itp) */
 void displayemu_refresh(void) {
 	_display_write_status();
