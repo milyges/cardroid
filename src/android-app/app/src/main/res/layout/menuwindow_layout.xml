@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="450px"
+    android:layout_height="275px"
+    android:padding="25px"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="@android:color/background_dark">
+
+    <TextView
+        android:id="@+id/statusBarRadioText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Menu radia"
+        android:textColor="@android:color/white"
+        android:textSize="32dp" />
+
+    <ListView
+        android:id="@+id/radioMenuListView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:choiceMode="singleChoice"
+        >
+
+    </ListView>
+</LinearLayout>

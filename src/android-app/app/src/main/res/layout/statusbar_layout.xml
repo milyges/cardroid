@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="800px"
+    android:layout_height="64dp"
+    android:paddingRight="16dp"
+    android:orientation="horizontal"
+    android:gravity="center"
+    android:background="@android:color/background_dark">
+
+    <ImageView
+        android:id="@+id/statusBarSourceIcon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/source_usb48" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="top">
+
+        <TextView
+            android:id="@+id/statusBarRadioText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:width="500px"
+            android:text="  &gt; ESKA &lt;   P4"
+            android:textColor="@android:color/white"
+            android:textSize="32dp"
+            android:typeface="monospace" />
+
+        <TextView
+            android:id="@+id/statusBarRadioIcons"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20px"
+            android:text="AF-RDS NEWS TRAFFIC"
+            android:textColor="@android:color/white"
+            android:textSize="12dp"
+            android:typeface="monospace" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+
+    <ImageView
+        android:id="@+id/statusBarBTIcon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/bluetooth_inactive" />
+
+    <TextClock
+        android:id="@+id/statusBarTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@android:color/white"
+        android:textSize="36dp"
+        android:textStyle="bold" />
+
+</LinearLayout>

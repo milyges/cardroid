@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="800px"
+    android:layout_height="416px"
+    android:gravity="center_horizontal"
+    android:orientation="vertical">
+
+    <!--<TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Menu główne"
+        android:textSize="30dp"
+        android:textStyle="bold"
+        android:textColor="@android:color/white"
+        />-->
+    <GridLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:columnCount="3"
+        android:rowCount="2"
+        android:gravity="center"
+        android:layout_marginTop="20dp" >
+
+        <Button
+            android:id="@+id/bRadio"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp"
+            android:text="Radio / CD"
+            android:textColor="@android:color/primary_text_dark"
+            android:drawableTop="@drawable/menu_radio"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:textSize="24sp"
+            android:layout_gravity="center"
+            android:onClick="openRadioActivity" />
+
+        <Button
+            android:id="@+id/bMultimedia"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp"
+            android:text="Multimedia"
+            android:textColor="@android:color/primary_text_dark"
+            android:drawableTop="@drawable/menu_multimedia"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:textSize="24sp"
+            android:layout_gravity="center"/>
+
+        <Button
+            android:id="@+id/bNavigation"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp"
+            android:text="Nawigacja"
+            android:textColor="@android:color/primary_text_dark"
+            android:drawableTop="@drawable/menu_map"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:textSize="24sp"
+            android:layout_gravity="center"
+            android:onClick="openNavigation" />
+
+        <Button
+            android:id="@+id/bDashboard"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp"
+            android:text="Wskaźniki"
+            android:textColor="@android:color/primary_text_dark"
+            android:drawableTop="@drawable/menu_dashboard"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:textSize="24sp"
+            android:layout_gravity="center" />
+
+        <Button
+            android:id="@+id/bPhone"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp"
+            android:text="Telefon"
+            android:textColor="@android:color/primary_text_dark"
+            android:drawableTop="@drawable/menu_phone"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:textSize="24sp"
+            android:layout_gravity="center"/>
+
+        <Button
+            android:id="@+id/bSettings"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp"
+            android:text="Ustawienia"
+            android:textColor="@android:color/primary_text_dark"
+            android:drawableTop="@drawable/menu_settings"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:textSize="24sp"
+            android:layout_gravity="center"
+            android:onClick="openSettings" />
+
+    </GridLayout>
+    <View
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+</LinearLayout>
