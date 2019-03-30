@@ -1,2 +1,4 @@
 src/mainboard-stm32/Debug
 src/android-app/app/build
+*.s#*
+*.b#*
