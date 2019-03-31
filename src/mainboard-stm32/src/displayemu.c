@@ -269,9 +269,8 @@ void USB_LP_CAN1_RX0_IRQHandler(void) {
 }
 
 void displayemu_tick(void) {
-	if (--_timeout == 0) { /* Zmniejszamy timeout, jeżeli osiągnie 0 to znaczy że straciliśmy synchronizację z CAN */
-		_sync_state = displaySyncLost;
-		_timeout = -1;
+	if (_timeout > 0) {
+		_timeout--;
 	}
 }
 
@@ -312,7 +311,7 @@ void displayemu_init(void) {
 
 	GPIO_PinRemapConfig(GPIO_Remap1_CAN1, ENABLE);
 
-	/* CAN 1Mbps */
+	/* CAN 500kbps */
 	CAN_DeInit(CAN1);
 	CAN_StructInit(&can_initstruct);
 	can_initstruct.CAN_TTCM = DISABLE;
@@ -363,3 +362,14 @@ void displayemu_stop(void) {
 	CAN_DeInit(CAN1);
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_CAN1, DISABLE);
 }
+
+void displayemu_loop(void) {
+	if (_timeout == 0) { /* Zmniejszamy timeout, jeżeli osiągnie 0 to znaczy że straciliśmy synchronizację z CAN */
+		uprintf("+DEBUG: Display sync lost, resetting CAN BUS\n");
+		_sync_state = displaySyncLost;
+		_timeout = -1;
+		displayemu_stop();
+		displayemu_init();
+	}
+}
+

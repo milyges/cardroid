@@ -30,6 +30,15 @@ static inline uint8_t _bcd(uint8_t num) {
     return ((num / 10) << 4) | (num % 10);
 }
 
+static uint8_t _checksum(uint8_t * packet, uint8_t packetlen) {
+	uint8_t checksum = 0;
+	int i;
+	for(i = 0; i < packetlen; i++) {
+		checksum ^= packet[i];
+	}
+	return checksum;
+}
+
 /* Kolejka przychodzących danych z HU */
 static volatile struct {
 	uint8_t in_ptr;
@@ -70,7 +79,6 @@ static void _cdc_putc(uint8_t c) {
 
 static void _cdc_packet_send(uint8_t * data, uint8_t datalen) {
 	uint8_t frame[32];
-	uint8_t checksum = 0;
 	int i;
 
 	frame[0] = 0x3D; /* Nagłówek ramki */
@@ -82,10 +90,7 @@ static void _cdc_packet_send(uint8_t * data, uint8_t datalen) {
 	}
 
 	/* Obliczamy sumę kontrolną i wysyłamy dane */
-	for(i = 0; i < datalen + 3; i++) {
-		checksum ^= frame[i];
-	}
-	frame[i] = checksum;
+	frame[datalen + 3] = _checksum(frame, datalen + 3);
 
 	for(i = 0; i < datalen + 4;i++ )
 		_cdc_putc(frame[i]);
@@ -161,7 +166,7 @@ static void _cdc_packet_playing_status(void) {
 }
 /* Reset stanu emulatora */
 static void _cdc_reset(void) {
-	uprintf("+DEBUG:CDC Reset\n");
+	//uprintf("+DEBUG:CDC Reset\n");
 	_frame_id = 0x00;
 	_changer_state = cdcStateBooting1;
 	_current_cd = 1;
@@ -353,12 +358,18 @@ void cdcemu_loop(void) {
 			}
 			checksum = _queue_get();
 
+			/* Sprawdzamy sumę kontrolną */
+			if (checksum != _checksum(buf, buf[2] + 3)) {
+				uprintf("+CDC: checksum invalid, ignoring packet\n");
+				return;
+			}
+
 			/* Wysyłamy potwierdzenie odbioru do HU */
 			_cdc_putc(0xC5);
 
 			//uprintf("CDC: Got packet: id=%02x, len=%d, checksum=%02x, data[0]=%02x\n", buf[0], buf[2], checksum, buf[3]);
 
-			/* TODO: Sprawdz sume kontrolna */
+
 
 			if (buf[1] != last_frame_id) { /* Duplikaty, ignorujemy */
 				last_frame_id = buf[1];

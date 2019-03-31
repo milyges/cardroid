@@ -27,5 +27,6 @@ void displayemu_tick(void);
 void displayemu_refresh(void);
 void displayemu_init(void);
 void displayemu_stop(void);
+void displayemu_loop(void);
 
 #endif /* __DISPLAYEMU_H */

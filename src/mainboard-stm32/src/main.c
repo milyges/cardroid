@@ -155,6 +155,7 @@ int main(void) {
 		}
 
 		cdcemu_loop();
+		displayemu_loop();
 		//__WFE();
 	}
 }
