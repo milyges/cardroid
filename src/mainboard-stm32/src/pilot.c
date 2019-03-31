@@ -29,7 +29,7 @@
 
 static inline void _pilot_delay(void) {
 	int i;
-	for (i = 0; i < 4000; i++) __NOP();
+	for (i = 0; i < 400; i++) __NOP();
 }
 
 uint8_t pilot_getkey(void) {

@@ -29,7 +29,7 @@ static void _write_power_status(void) {
 /* Przerwanie uruchamiane co 1ms */
 void SysTick_Handler(void) {
 	displayemu_tick();
-	//cdcemu_tick();
+	cdcemu_tick();
 }
 
 int main(void) {
@@ -51,7 +51,7 @@ int main(void) {
 		power_standby();
 	}
 
-	//cdcemu_init(); /* Emulator zmieniarki */
+	cdcemu_init(); /* Emulator zmieniarki */
 
 	power_odroid_set(ENABLE); /* Włączamy zasilanie odroida */
 
@@ -154,6 +154,7 @@ int main(void) {
 			oldkey = key;
 		}
 
+		cdcemu_loop();
 		//__WFE();
 	}
 }
