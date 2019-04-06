@@ -44,7 +44,8 @@
             android:drawableTop="@drawable/menu_multimedia"
             style="@style/Widget.AppCompat.Button.Borderless"
             android:textSize="24sp"
-            android:layout_gravity="center"/>
+            android:layout_gravity="center"
+            android:onClick="openMediaPlayer"/>
 
         <Button
             android:id="@+id/bNavigation"

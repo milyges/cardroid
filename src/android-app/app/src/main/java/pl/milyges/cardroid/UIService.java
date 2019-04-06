@@ -1,12 +1,15 @@
 package pl.milyges.cardroid;
 
 import android.app.Service;
+import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.PixelFormat;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.Gravity;
@@ -32,8 +35,8 @@ public class UIService extends Service {
             -1,
             R.drawable.source_radio48,
             R.drawable.source_cd48,
-            R.drawable.source_usb48,
-            R.drawable.source_bt48
+            R.drawable.source_multimedia48,
+            R.drawable.source_aux48
     };
 
     private WindowManager _windowManager;
@@ -42,6 +45,8 @@ public class UIService extends Service {
     private LinearLayout _statusbarLayout;
     private RadioTextScroller _radioTextScroller;
     private ImageView _sourceIcon;
+    private ImageView _bluetoothIcon;
+    private ImageView _internetIcon;
     private TextView _radioIcons;
     private boolean _radioInfoVisible = true;
     private boolean _radioOn = false;
@@ -174,6 +179,37 @@ public class UIService extends Service {
         }
     };
 
+    private final BroadcastReceiver _bRemoteReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (ConnectivityManager.CONNECTIVITY_ACTION.equals(action)) {
+                _updateInternetIcon();
+            }
+            else if (BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED.equals(action)) {
+                int state = intent.getIntExtra(BluetoothAdapter.EXTRA_CONNECTION_STATE, BluetoothAdapter.STATE_DISCONNECTED);
+                if (state == BluetoothAdapter.STATE_CONNECTED) {
+                    _bluetoothIcon.setImageResource(R.drawable.bluetooth_active);
+                }
+                else {
+                    _bluetoothIcon.setImageResource(R.drawable.bluetooth_inactive);
+                }
+
+            }
+        }
+    };
+
+    private void _updateInternetIcon() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = connectivityManager.getActiveNetworkInfo();
+        if ((netInfo != null) && (netInfo.isConnected())) {
+            _internetIcon.setImageResource(R.drawable.internet_connected);
+        }
+        else {
+            _internetIcon.setImageResource(R.drawable.internet_disconnected);
+        }
+    }
+
     private void _setRadioInfoVisible() {
         if ((_radioOn) && (_radioInfoVisible)) {
             _sourceIcon.setVisibility(ImageView.VISIBLE);
@@ -214,9 +250,11 @@ public class UIService extends Service {
 
         _log("statusbar created");
 
-        _radioTextScroller = new RadioTextScroller((TextView)_statusbarLayout.findViewById(R.id.statusBarRadioText), 20, 500);
+        _radioTextScroller = new RadioTextScroller((TextView)_statusbarLayout.findViewById(R.id.statusBarRadioText), 24, 500);
         _sourceIcon = (ImageView)_statusbarLayout.findViewById(R.id.statusBarSourceIcon);
         _radioIcons = (TextView)_statusbarLayout.findViewById(R.id.statusBarRadioIcons);
+        _bluetoothIcon = (ImageView)_statusbarLayout.findViewById(R.id.statusBarBTIcon);
+        _internetIcon = (ImageView)_statusbarLayout.findViewById(R.id.statusBarInternetIcon);
 
         _volumeWindowLayout = (LinearLayout) LayoutInflater.from(this).inflate(R.layout.volumewindow_layout, null);
         _volumeWindowParams = new WindowManager.LayoutParams(
@@ -246,6 +284,7 @@ public class UIService extends Service {
         _menuListView.setAdapter(_menuListViewAdapter);
 
         _requestRefresh();
+        _updateInternetIcon();
     }
 
     public UIService() {
@@ -261,7 +300,8 @@ public class UIService extends Service {
         _log("onCreate()");
         super.onCreate();
 
-        IntentFilter filter = new IntentFilter();
+        IntentFilter filter;
+        filter = new IntentFilter();
         filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
         filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
         filter.addAction(CarDroidService.ACTION_RADIOACTIVITY_CHANGED);
@@ -274,7 +314,10 @@ public class UIService extends Service {
 
         LocalBroadcastManager.getInstance(this).registerReceiver(_bReceiver, filter);
 
-
+        filter = new IntentFilter();
+        filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+        filter.addAction(BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED);
+        registerReceiver(_bRemoteReceiver, filter);
     }
 
     @Override

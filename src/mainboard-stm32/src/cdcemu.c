@@ -7,7 +7,7 @@
 #include "usart.h"
 #include "rtc.h"
 
-#define RECV_TIMEOUT       20 /* Czas w * 10ms na potwierdzenie od HU (200ms) */
+#define RECV_TIMEOUT       40 /* Czas w * 10ms na potwierdzenie od HU (400ms) */
 #define QUEUE_LEN          32 /* Długośc kolejki odbieranych danych */
 #define PING_TIMEOUT      300 /* Czas, po którym uznajemy że coś się zawiesiło i resetujemy emulator */
 
@@ -70,6 +70,20 @@ static inline int _queue_get(void) {
 	return data;
 }
 
+/* Reset stanu emulatora */
+static void _cdc_reset(void) {
+	//uprintf("+DEBUG:CDC Reset\n");
+	_frame_id = 0x00;
+	_changer_state = cdcStateBooting1;
+	_current_cd = 1;
+	_current_track = 1;
+	_cd_state = cdStateNoCD;
+	_tray_state = trayStateCDReady;
+	_random_enabled = 0;
+	_cd_bitmap = 0xFC;
+	_recv_timeout = -1;
+}
+
 /* Wysyłanie danych do HU */
 static void _cdc_putc(uint8_t c) {
 	//uprintf("+DEBUG: CDC Send 0x%X\n", c);
@@ -79,7 +93,7 @@ static void _cdc_putc(uint8_t c) {
 
 static void _cdc_packet_send(uint8_t * data, uint8_t datalen) {
 	uint8_t frame[32];
-	int i;
+	int i, retries = 1;
 
 	frame[0] = 0x3D; /* Nagłówek ramki */
 	frame[1] = _frame_id++; /* ID Ramki */
@@ -92,13 +106,23 @@ static void _cdc_packet_send(uint8_t * data, uint8_t datalen) {
 	/* Obliczamy sumę kontrolną i wysyłamy dane */
 	frame[datalen + 3] = _checksum(frame, datalen + 3);
 
-	for(i = 0; i < datalen + 4;i++ )
-		_cdc_putc(frame[i]);
+	while(retries-- > 0) {
+		for(i = 0; i < datalen + 4;i++ )
+			_cdc_putc(frame[i]);
 
-	/* Czekamy na potwierdzenie od HU */
-	_ack_recvied = 0;
-	_recv_timeout = RECV_TIMEOUT;
-	while((!_ack_recvied) && (_recv_timeout > 0)) __NOP();
+		/* Czekamy na potwierdzenie od HU */
+		_ack_recvied = 0;
+		_recv_timeout = RECV_TIMEOUT;
+		while(_recv_timeout > 0) __NOP();
+		if (_ack_recvied) {
+			break;
+		}
+		else {
+			uprintf("+DEBUG: _cdc_packet_send: timeout (no ack), retries=%d\n", retries);
+			_cdc_reset();
+		}
+	}
+	//return _ack_received;
 }
 
 /* Wysyłanie odpowiednich typów komunikatów */
@@ -164,19 +188,7 @@ static void _cdc_packet_playing_status(void) {
 		0x01,
 		0x00 }, 11);
 }
-/* Reset stanu emulatora */
-static void _cdc_reset(void) {
-	//uprintf("+DEBUG:CDC Reset\n");
-	_frame_id = 0x00;
-	_changer_state = cdcStateBooting1;
-	_current_cd = 1;
-	_current_track = 1;
-	_cd_state = cdStateNoCD;
-	_tray_state = trayStateCDReady;
-	_random_enabled = 0;
-	_cd_bitmap = 0xFC;
-	_recv_timeout = -1;
-}
+
 
 /* Wysłanie odpowiedniego pakietu, w zależności od stanu emulatora */
 static void _cdc_send_state(void) {
@@ -208,11 +220,12 @@ void USART1_IRQHandler(void) {
 
 	if (USART_GetITStatus(USART1, USART_IT_RXNE) != RESET) {
 		c = USART_ReceiveData(USART1);
-		_ping_timeout = PING_TIMEOUT;
+		_queue_put(c);
 		if (c == 0xC5) {
 			_ack_recvied = 1;
+			_recv_timeout = -1;
 		}
-		_queue_put(c);
+		_ping_timeout = PING_TIMEOUT;
 	}
 }
 
@@ -328,14 +341,14 @@ void cdcemu_loop(void) {
 
 			if (!_wait_for_data()) {
 				uprintf("+DEBUG: CDC can't get frame id, timeout.\n");
-				_cdc_reset();
+				//_cdc_reset();
 				return;
 			}
 			buf[1] = _queue_get(); /* Frame ID */
 
 			if (!_wait_for_data()) {
 				uprintf("+DEBUG: CDC can't get frame length, timeout.\n");
-				_cdc_reset();
+				//_cdc_reset();
 				return;
 			}
 			buf[2] = _queue_get(); /* Data len */
@@ -344,7 +357,7 @@ void cdcemu_loop(void) {
 			for(i = 0; i < buf[2]; i++) {
 				if (!_wait_for_data()) {
 					uprintf("+DEBUG: CDC can't get frame data[%d], timeout.\n", i);
-					_cdc_reset();
+					//_cdc_reset();
 					return;
 				}
 				buf[3 + i] = _queue_get();
@@ -353,7 +366,7 @@ void cdcemu_loop(void) {
 			/* Suma kontrolna */
 			if (!_wait_for_data()) {
 				uprintf("+DEBUG: CDC can't get frame checksum, timeout.\n");
-				_cdc_reset();
+				//_cdc_reset();
 				return;
 			}
 			checksum = _queue_get();
@@ -363,17 +376,15 @@ void cdcemu_loop(void) {
 				uprintf("+CDC: checksum invalid, ignoring packet\n");
 				return;
 			}
-
-			/* Wysyłamy potwierdzenie odbioru do HU */
-			_cdc_putc(0xC5);
-
-			//uprintf("CDC: Got packet: id=%02x, len=%d, checksum=%02x, data[0]=%02x\n", buf[0], buf[2], checksum, buf[3]);
+			//uprintf("+DEBUG:CDC: Got packet: id=%02x, len=%d, checksum=%02x, data[0]=%02x\n", buf[0], buf[2], checksum, buf[3]);
 
 
 
 			if (buf[1] != last_frame_id) { /* Duplikaty, ignorujemy */
 				last_frame_id = buf[1];
 				_cdc_packet_recv(&buf[3], buf[2]);
+				/* Wysyłamy potwierdzenie odbioru do HU */
+				_cdc_putc(0xC5);
 			}
 		}
 	}

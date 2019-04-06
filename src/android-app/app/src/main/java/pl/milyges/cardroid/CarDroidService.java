@@ -1,19 +1,40 @@
 package pl.milyges.cardroid;
 
 import android.app.Service;
+import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothA2dp;
+import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothProfile;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.media.AudioManager;
+import android.os.Bundle;
 import android.os.IBinder;
+import android.os.SystemClock;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.view.KeyEvent;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
+import java.text.DateFormat;
+import java.text.FieldPosition;
+import java.text.ParsePosition;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.TimeZone;
 
 public class CarDroidService extends Service {
     /* Typy źródeł dźwięku */
@@ -48,10 +69,20 @@ public class CarDroidService extends Service {
     public static final String CMD_BACKLIGHT_OFF = "+BOFF";
     public static final String CMD_BACKLIGHT_ON = "+BON";
 
+    /* Aplikacja do otwarzania muzyki */
+    public final static String MEDIAPLAYER_PACKAGE = "com.musicplayer.playermusic";
+
+    /* Akcje łapane od playera */
+    public static final String ACTION_MEDIAPLAYER_METACHANGED = MEDIAPLAYER_PACKAGE + ".metachanged";
+    public static final String ACTION_MEDIAPLAYER_PLAYSTATECHANGED = MEDIAPLAYER_PACKAGE + ".playstatechanged";
+    public static final String ACTION_MEDIAPLAYER_REFRESH = MEDIAPLAYER_PACKAGE + ".refresh";
+
     private CarDroidSerial _serial;
     private String _radioText;
     private int _radioSource;
     private boolean _radioSourcePaused;
+    private AudioManager _audioManager = null;
+    private String _mediaplayerRadioText = "";
 
     private final BroadcastReceiver _bReceiver = new BroadcastReceiver() {
         @Override
@@ -64,6 +95,66 @@ public class CarDroidService extends Service {
 
                 _serial.sendCommand(CMD_DISPLAY_REFRESH);
             }
+        }
+    };
+
+    private final BroadcastReceiver _bRemoteReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+
+            //_log("_bRemoteReceiver: action=" + action);
+
+            if (ACTION_MEDIAPLAYER_METACHANGED.equals(action)) {
+                String track = intent.getStringExtra("track");
+                String artist = intent.getStringExtra("artist");
+                if (artist == null) {
+                    artist = "<unknown>";
+                }
+
+                if (!artist.equals("<unknown>")) {
+                    _mediaplayerRadioText = artist + " - " + track;
+                }
+                else {
+                    _mediaplayerRadioText = track;
+                }
+
+                if(_radioSource == SOURCE_MULTIMEDIA) {
+                    _radioTextChanged(_mediaplayerRadioText, _radioSource);
+                }
+            }
+        }
+    };
+
+    private final LocationListener _locationListener = new LocationListener() {
+        private float _minAccuracy = 9999;
+
+        @Override
+        public void onLocationChanged(Location location) {
+            if (location.hasAccuracy()) {
+                if (location.getAccuracy() < _minAccuracy) { /* Jak mamy dokładność poniżej 10m to mamy fixa */
+                    _minAccuracy = location.getAccuracy();
+                    if (_minAccuracy < 10) { /* Poniżej 10m to na pewno mamy fixa ;) */
+                        _minAccuracy = 0;
+                    }
+                    _setDateTime(location.getTime());
+                }
+            }
+        }
+
+        @Override
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+
+        }
+
+        @Override
+        public void onProviderEnabled(String provider) {
+
+        }
+
+        @Override
+        public void onProviderDisabled(String provider) {
+
         }
     };
 
@@ -87,6 +178,7 @@ public class CarDroidService extends Service {
             }
         }
 
+
         public void run() {
             super.run();
             _log("Serial init.");
@@ -97,7 +189,7 @@ public class CarDroidService extends Service {
             }
             _log("Serial ready.");
 
-            while (true) {
+            while (!isInterrupted()) {
                 try {
                     String line = _ttyFile.readLine();
 
@@ -113,6 +205,9 @@ public class CarDroidService extends Service {
                         }
                         else if (line.startsWith("+RADIOICONS:")) {
                             _radioIconsRecv(line.substring("+RADIOICONS:".length()));
+                        }
+                        else if (line.startsWith("+CDC:")) {
+                            _cdcCmdRecv(line.substring("+CDC:".length()));
                         }
                         else if (line.startsWith("+SHUTDOWN")) {
                             _log("Shutdown system.");
@@ -134,9 +229,31 @@ public class CarDroidService extends Service {
         Log.d("CarDroidSerivce", s);
     }
 
+    private void _sendMediaKey(int key) {
+        if (_audioManager == null) {
+            _audioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
+        }
+
+        long eventTime = SystemClock.uptimeMillis();
+        _audioManager.dispatchMediaKeyEvent(new KeyEvent(eventTime, eventTime, KeyEvent.ACTION_DOWN, key, 0));
+        _audioManager.dispatchMediaKeyEvent(new KeyEvent(eventTime, eventTime, KeyEvent.ACTION_UP, key, 0));
+    }
+
     private void _shutdown() {
+        _bluetoothSetState(false); /* Wyłączamy BT przed zamknięciem systemu */
         try {
             Runtime.getRuntime().exec(new String[]{ "su", "-c", "svc power shutdown"});
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void _setDateTime(long timestamp) {
+        SimpleDateFormat sdf = new SimpleDateFormat("MMddHHmmyyyy.ss");
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+        Date d = new Date(timestamp);
+        try {
+            Runtime.getRuntime().exec(new String[]{ "su", "-c", "date -u " + sdf.format(d)});
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -302,10 +419,41 @@ public class CarDroidService extends Service {
         }
 
         if (source == SOURCE_MULTIMEDIA) {
-            _radioTextChanged(_radioText, source);
+            _radioTextChanged(_mediaplayerRadioText, source);
         }
         else {
             _radioTextChanged(text, source);
+        }
+    }
+
+    private void _cdcCmdRecv(String text) {
+        String args[] = text.split(",");
+        if (args[0].equals("PLAY")) {
+            _sendMediaKey(KeyEvent.KEYCODE_MEDIA_PLAY);
+        }
+        else if (args[0].equals("PAUSE")) {
+            _sendMediaKey(KeyEvent.KEYCODE_MEDIA_PAUSE);
+        }
+        else if (args[0].equals("STOP")) {
+            _sendMediaKey(KeyEvent.KEYCODE_MEDIA_PAUSE);
+        }
+        else if (args[0].equals("NEXT")) {
+            _sendMediaKey(KeyEvent.KEYCODE_MEDIA_NEXT);
+        }
+        else if (args[0].equals("PREV")) {
+            _sendMediaKey(KeyEvent.KEYCODE_MEDIA_PREVIOUS);
+        }
+    }
+
+    private void _bluetoothSetState(boolean enabled) {
+        BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+        if (adapter.isEnabled() != enabled) {
+            if (enabled) {
+                adapter.enable();
+            }
+            else {
+                adapter.disable();
+            }
         }
     }
 
@@ -314,6 +462,7 @@ public class CarDroidService extends Service {
         _log("onCreate");
         super.onCreate();
         _serial = new CarDroidSerial();
+        _serial.start();
         _radioText = "";
     }
 
@@ -325,16 +474,36 @@ public class CarDroidService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        _log("onStartCommand");
+        IntentFilter filter;
 
-        _serial.start();
+        _log("onStartCommand");
         _serial.sendCommand(CMD_DISPLAY_REFRESH);
         _serial.sendCommand(CMD_POWER_STATUS);
 
-        IntentFilter filter = new IntentFilter();
+        filter = new IntentFilter();
         filter.addAction(ACTION_REQUEST_REFRESH);
         LocalBroadcastManager.getInstance(this).registerReceiver(_bReceiver, filter);
 
+        filter = new IntentFilter();
+        /* Komunikaty od mediaplayera */
+        filter.addAction(ACTION_MEDIAPLAYER_METACHANGED);
+        filter.addAction(ACTION_MEDIAPLAYER_PLAYSTATECHANGED);
+        filter.addAction(ACTION_MEDIAPLAYER_REFRESH);
+
+        registerReceiver(_bRemoteReceiver, filter);
+
+        LocationManager locationManager = (LocationManager)getSystemService(LOCATION_SERVICE);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 0, _locationListener);
+
+        _bluetoothSetState(false);
+        
+        _bluetoothSetState(true);
         return super.onStartCommand(intent, flags, startId);
+    }
+
+    @Override
+    public void onDestroy() {
+        _serial.interrupt();
+        super.onDestroy();
     }
 }

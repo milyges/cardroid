@@ -89,7 +89,11 @@ int main(void) {
 			_write_power_status();
 
 			if ((!ignon) && (!radioon)) {
+				power_display_set(DISABLE); /* Wyłączamy podświetlenie ekranu */
 				shutdown_time = rtc_time() + SHUTDOWN_TIME;
+			}
+			else {
+				power_display_set(ENABLE); /* Włączamy podświetlenie ekranu */
 			}
 		}
 

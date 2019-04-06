@@ -20,16 +20,16 @@
 #define ROW0_PIN    GPIO_Pin_7
 #define ROW1_GPIO   GPIOB
 #define ROW1_PIN    GPIO_Pin_1
-#define ROW2_GPIO   GPIOA
+#define ROW2_GPIO   GPIOB
 #define ROW2_PIN    GPIO_Pin_0
 
-#define ROW_DOWN(x) GPIO_WriteBit(x ## _GPIO, x ## _PIN, Bit_SET)
-#define ROW_UP(x) GPIO_WriteBit(x ## _GPIO, x ## _PIN, Bit_RESET)
+#define ROW_DOWN(x) GPIO_WriteBit(x ## _GPIO, x ## _PIN, Bit_RESET)
+#define ROW_UP(x) GPIO_WriteBit(x ## _GPIO, x ## _PIN, Bit_SET)
 #define COL_READ(x) (GPIO_ReadInputDataBit(x ## _GPIO, x ## _PIN) == Bit_SET)
 
 static inline void _pilot_delay(void) {
 	int i;
-	for (i = 0; i < 400; i++) __NOP();
+	for (i = 0; i < 4000; i++) __NOP();
 }
 
 uint8_t pilot_getkey(void) {
@@ -94,7 +94,7 @@ void pilot_init(void) {
 	gpio_initstruct.GPIO_Pin = COL2_PIN;
 	GPIO_Init(COL2_GPIO, &gpio_initstruct);
 
-	/* Wiersze jako wejścia, z podciągnięciem do GND */
+	/* Wiersze jako wyjścia Open Drain */
 	gpio_initstruct.GPIO_Mode = GPIO_Mode_Out_OD;
 	gpio_initstruct.GPIO_Speed = GPIO_Speed_2MHz;
 	gpio_initstruct.GPIO_Pin = ROW0_PIN;
@@ -103,4 +103,7 @@ void pilot_init(void) {
 	GPIO_Init(ROW1_GPIO, &gpio_initstruct);
 	gpio_initstruct.GPIO_Pin = ROW2_PIN;
 	GPIO_Init(ROW2_GPIO, &gpio_initstruct);
+	ROW_UP(ROW0);
+	ROW_UP(ROW1);
+	ROW_UP(ROW2);
 }

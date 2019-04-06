@@ -11,7 +11,9 @@
         android:id="@+id/statusBarSourceIcon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/source_usb48" />
+        android:src="@drawable/source_usb48"
+        android:layout_marginLeft="5px"
+        android:layout_marginRight="5px" />
 
     <LinearLayout
         android:layout_width="wrap_content"
@@ -45,6 +47,12 @@
         android:layout_height="0dp"
         android:layout_weight="1" />
 
+
+    <ImageView
+        android:id="@+id/statusBarInternetIcon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/internet_disconnected" />
 
     <ImageView
         android:id="@+id/statusBarBTIcon"

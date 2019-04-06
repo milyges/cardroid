@@ -1,14 +1,11 @@
 package pl.milyges.cardroid;
 
 import android.app.Activity;
-import android.app.UiAutomation;
-import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -18,8 +15,8 @@ public class RadioActivity extends Activity {
             -1,
             R.drawable.source_radio128,
             R.drawable.source_cd128,
-            R.drawable.source_usb128,
-            R.drawable.source_bt128
+            R.drawable.source_multimedia128,
+            R.drawable.source_aux128
     };
 
     private RadioTextScroller _radioTextScroller;
@@ -102,7 +99,7 @@ public class RadioActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_radio);
 
-        _radioTextScroller = new RadioTextScroller((TextView)findViewById(R.id.radioActivityRadioText), 20, 500);
+        _radioTextScroller = new RadioTextScroller((TextView)findViewById(R.id.radioActivityRadioText), 22, 500);
         _radioIcons = (TextView)findViewById(R.id.radioActivityRadioIcons);
         _sourceIcon = (ImageView)findViewById(R.id.radioActivityRadioSource);
 

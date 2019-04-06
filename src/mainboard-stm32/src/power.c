@@ -27,7 +27,15 @@ uint8_t power_ign_on(void) {
 	return GPIO_ReadInputDataBit(POWER_GPIO, POWER_IGNON_PIN) == Bit_SET;
 }
 
-void power_display_set(uint8_t state);
+void power_display_set(uint8_t state) {
+	if (state == ENABLE) {
+		GPIO_WriteBit(POWER_GPIO, POWER_DISPLAY_PIN, Bit_SET);
+	}
+	else {
+		GPIO_WriteBit(POWER_GPIO, POWER_DISPLAY_PIN, Bit_RESET);
+	}
+}
+
 void power_display_brightness(uint8_t level);
 
 void power_standby(void) {

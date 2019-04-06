@@ -45,6 +45,7 @@ class RadioTextScroller {
         if (!_text.equals(s)) {
             _text = s;
             _textPos = 0;
+            _scrollHandler.removeCallbacks(_scrollTask);
             _scrollHandler.post(_scrollTask);
         }
     }
