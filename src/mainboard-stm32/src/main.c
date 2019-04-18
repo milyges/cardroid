@@ -8,8 +8,8 @@
 #include "pilot.h"
 #include <string.h>
 
-#define SHUTDOWN_TIME    10 /* Czas do wysłania do odroida żądania zamknięcia systemu */
-#define SHUTDOWN_DELAY   15 /* Czas od wysłania żądania do odcięcia zasilania */
+#define SHUTDOWN_TIME    60 /* Czas do wysłania do odroida żądania zamknięcia systemu */
+#define SHUTDOWN_DELAY   30 /* Czas od wysłania żądania do odcięcia zasilania */
 
 static void _write_power_status(void) {
 	uint8_t ignon, radioon;

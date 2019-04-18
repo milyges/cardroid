@@ -127,4 +127,10 @@ public class MainMenuActivity extends Activity {
         i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         startActivity(i);
     }
+
+    public void openDashboardActivity(View v) {
+        Intent i = new Intent(getApplicationContext(), DashboardActivity.class);
+        i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        startActivity(i);
+    }
 }

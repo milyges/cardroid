@@ -70,7 +70,8 @@
             android:drawableTop="@drawable/menu_dashboard"
             style="@style/Widget.AppCompat.Button.Borderless"
             android:textSize="24sp"
-            android:layout_gravity="center" />
+            android:layout_gravity="center"
+            android:onClick="openDashboardActivity"/>
 
         <Button
             android:id="@+id/bPhone"

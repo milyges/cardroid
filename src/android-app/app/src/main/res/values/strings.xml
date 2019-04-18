@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">CarDroid</string>
+    <string name="title_activity_dashboard">DashboardActivity</string>
 </resources>

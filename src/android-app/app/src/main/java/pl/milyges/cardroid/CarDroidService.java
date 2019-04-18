@@ -2,16 +2,11 @@ package pl.milyges.cardroid;
 
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothA2dp;
-import android.bluetooth.BluetoothGatt;
-import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -27,13 +22,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
-import java.text.DateFormat;
-import java.text.FieldPosition;
-import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
 import java.util.TimeZone;
 
 public class CarDroidService extends Service {
@@ -77,12 +67,18 @@ public class CarDroidService extends Service {
     public static final String ACTION_MEDIAPLAYER_PLAYSTATECHANGED = MEDIAPLAYER_PACKAGE + ".playstatechanged";
     public static final String ACTION_MEDIAPLAYER_REFRESH = MEDIAPLAYER_PACKAGE + ".refresh";
 
+    /* Akcje z "ukrytego" api od bluetooth */
+    public static final String A2DP_ACTION_PLAYING_STATE_CHANGED = "android.bluetooth.a2dp-sink.profile.action.PLAYING_STATE_CHANGED";
+    public static final int A2DP_EXTRA_STATE_PLAYING = 10;
+    public static final int A2DP_STATE_NOT_PLAYING = 11;
+
     private CarDroidSerial _serial;
     private String _radioText;
     private int _radioSource;
     private boolean _radioSourcePaused;
     private AudioManager _audioManager = null;
     private String _mediaplayerRadioText = "";
+    private boolean _a2dpPlaying = false;
 
     private final BroadcastReceiver _bReceiver = new BroadcastReceiver() {
         @Override
@@ -120,7 +116,29 @@ public class CarDroidService extends Service {
                 }
 
                 if(_radioSource == SOURCE_MULTIMEDIA) {
-                    _radioTextChanged(_mediaplayerRadioText, _radioSource);
+                    if (_a2dpPlaying) {
+                        _radioTextChanged("BLUETOOTH", _radioSource);
+                    }
+                    else {
+                        _radioTextChanged(_mediaplayerRadioText, _radioSource);
+                    }
+                }
+            }
+            else if (A2DP_ACTION_PLAYING_STATE_CHANGED.equals(action)) {
+                int state = intent.getIntExtra(BluetoothProfile.EXTRA_STATE, A2DP_STATE_NOT_PLAYING);
+                if (state == A2DP_EXTRA_STATE_PLAYING) {
+                    _a2dpPlaying = true;
+                    if (_radioSource == SOURCE_MULTIMEDIA) {
+                        _sendMediaKey(KeyEvent.KEYCODE_MEDIA_PAUSE);
+                        _radioTextChanged("BLUETOOTH", _radioSource);
+                    }
+                }
+                else {
+                    _a2dpPlaying = false;
+                    if (_radioSource == SOURCE_MULTIMEDIA) {
+                        _sendMediaKey(KeyEvent.KEYCODE_MEDIA_PLAY);
+                        _radioTextChanged(_mediaplayerRadioText, _radioSource);
+                    }
                 }
             }
         }
@@ -428,6 +446,10 @@ public class CarDroidService extends Service {
 
     private void _cdcCmdRecv(String text) {
         String args[] = text.split(",");
+        if (_a2dpPlaying) { /* Jeżeli gramy przez BT to ignorujemy */
+            return;
+        }
+
         if (args[0].equals("PLAY")) {
             _sendMediaKey(KeyEvent.KEYCODE_MEDIA_PLAY);
         }
@@ -490,15 +512,21 @@ public class CarDroidService extends Service {
         filter.addAction(ACTION_MEDIAPLAYER_PLAYSTATECHANGED);
         filter.addAction(ACTION_MEDIAPLAYER_REFRESH);
 
+        /* Komunikaty od bluetooth */
+        filter.addAction(A2DP_ACTION_PLAYING_STATE_CHANGED);
+
         registerReceiver(_bRemoteReceiver, filter);
 
         LocationManager locationManager = (LocationManager)getSystemService(LOCATION_SERVICE);
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 0, _locationListener);
 
         _bluetoothSetState(false);
-        
+
         _bluetoothSetState(true);
         return super.onStartCommand(intent, flags, startId);
+
+
+
     }
 
     @Override

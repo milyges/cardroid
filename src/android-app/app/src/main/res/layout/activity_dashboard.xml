@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="800px"
+    android:layout_height="416px"
+    android:gravity="center_horizontal"
+    android:orientation="vertical">
+
+    <GridLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:columnCount="3"
+        android:rowCount="2"
+        android:gravity="center"
+        >
+
+        <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:app="http://schemas.android.com/apk/res/pl.milyges.cardroid"
+            android:layout_width="250px"
+            android:layout_height="185px"
+            android:padding="5px">
+
+            <pl.milyges.cardroid.GaugeView
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                app:maxValue="170"
+                app:minValue="-30"
+                app:scaleTick="20"
+                app:value="0"
+                app:name="Intake Air Temp"
+                app:unitName="°C"
+                app:valuePrecision="0"
+                app:drawFromZero="false" />
+
+        </FrameLayout>
+
+        <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:app="http://schemas.android.com/apk/res/pl.milyges.cardroid"
+            android:layout_width="250px"
+            android:layout_height="185px"
+            android:padding="5px">
+
+            <pl.milyges.cardroid.GaugeView
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                app:maxValue="25"
+                app:minValue="-25"
+                app:scaleTick="5"
+                app:value="0"
+                app:name="Boost"
+                app:unitName="PSI"
+                app:valuePrecision="0"
+                app:drawFromZero="true"/>
+
+        </FrameLayout>
+        <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:app="http://schemas.android.com/apk/res/pl.milyges.cardroid"
+            android:layout_width="250px"
+            android:layout_height="185px"
+            android:padding="5px">
+
+            <pl.milyges.cardroid.GaugeView
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                app:maxValue="150"
+                app:minValue="0"
+                app:scaleTick="15"
+                app:value="0"
+                app:name="Fuel Pressure"
+                app:unitName="MPa"
+                app:valuePrecision="0"
+                app:drawFromZero="false" />
+
+        </FrameLayout>
+        <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:app="http://schemas.android.com/apk/res/pl.milyges.cardroid"
+            android:layout_width="250px"
+            android:layout_height="185px"
+            android:padding="5px">
+
+            <pl.milyges.cardroid.GaugeView
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                app:maxValue="170"
+                app:minValue="-30"
+                app:scaleTick="20"
+                app:value="0"
+                app:name="Coolant Temp"
+                app:unitName="°C"
+                app:valuePrecision="0"
+                app:drawFromZero="false" />
+
+        </FrameLayout>
+        <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:app="http://schemas.android.com/apk/res/pl.milyges.cardroid"
+            android:layout_width="250px"
+            android:layout_height="185px"
+            android:padding="5px">
+
+            <pl.milyges.cardroid.GaugeView
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                app:maxValue="100"
+                app:minValue="0"
+                app:scaleTick="10"
+                app:value="0"
+                app:name="Engine Load"
+                app:unitName="%"
+                app:valuePrecision="0"
+                app:drawFromZero="false" />
+
+        </FrameLayout>
+        <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:app="http://schemas.android.com/apk/res/pl.milyges.cardroid"
+            android:layout_width="250px"
+            android:layout_height="185px"
+            android:padding="5px">
+
+            <pl.milyges.cardroid.GaugeView
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                app:maxValue="18"
+                app:minValue="8"
+                app:scaleTick="1"
+                app:value="12"
+                app:name="Voltage"
+                app:unitName="V"
+                app:valuePrecision="0"
+                app:drawFromZero="false" />
+
+        </FrameLayout>
+
+    </GridLayout>
+</LinearLayout>
