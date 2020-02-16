@@ -7,9 +7,10 @@
 #include "cdcemu.h"
 #include "pilot.h"
 #include <string.h>
+#include <stdlib.h>
 
-#define SHUTDOWN_TIME    60 /* Czas do wysłania do odroida żądania zamknięcia systemu */
-#define SHUTDOWN_DELAY   30 /* Czas od wysłania żądania do odcięcia zasilania */
+#define SHUTDOWN_TIME    120 /* Czas do wysłania do odroida żądania zamknięcia systemu */
+#define SHUTDOWN_DELAY   30  /* Czas od wysłania żądania do odcięcia zasilania */
 
 static void _write_power_status(void) {
 	uint8_t ignon, radioon;
@@ -24,6 +25,22 @@ static void _write_power_status(void) {
 	else { /* Radio + zapłon włączone */
 		uprintf("+POWER:1,1\n");
 	}
+}
+
+static void _set_brightness(char * s) {
+	uint8_t b;
+
+	b = atoi(s);
+	if (b != 0) {
+		power_display_brightness(b);
+	}
+}
+
+static void _wdg_init(void) {
+	IWDG_WriteAccessCmd(IWDG_WriteAccess_Enable);
+	IWDG_SetPrescaler(IWDG_Prescaler_64); /* 40kHz/64 = 0.625kHz */
+	IWDG_SetReload(0xFFF); /* Przepłenianie co około 8s */
+	IWDG_Enable();
 }
 
 /* Przerwanie uruchamiane co 1ms */
@@ -41,6 +58,10 @@ int main(void) {
 	SysTick_Config(SystemCoreClock / 100);
 
 	power_init(); /* Zarządzanie zasilaniem */
+	if (power_ign_on()) {
+		power_odroid_set(ENABLE);
+	}
+
 	usart_init(); /* Port szeregowy do komunikacji z ODROID */
 	uprintf("\n+INFO:CarDroid starup\n");
 	rtc_init(); /* Inicjalizacja RTC */
@@ -50,15 +71,17 @@ int main(void) {
 		/* Jeżeli nie to usypiamy */
 		power_standby();
 	}
+	power_odroid_set(ENABLE); /* Włączamy zasilanie odroida */
 
 	cdcemu_init(); /* Emulator zmieniarki */
-
-	power_odroid_set(ENABLE); /* Włączamy zasilanie odroida */
 
 	displayemu_init(); /* Emulator wyświetlacza */
 	pilot_init();
 
+	_wdg_init();
+
 	while(1) {
+		/* Obsługa poleceń z Odroida */
 		if (usart_readcommand(cmd, sizeof(cmd))) { /* Nowe polecenie */
 			if (!strcmp(cmd, "+DR\n")) { /* Wyślij dane z ekranu (radio text, ikony, itp) ponownie */
 				displayemu_refresh();
@@ -66,14 +89,9 @@ int main(void) {
 			else if (!strcmp(cmd, "+PS\n")) { /* Wyślij stan zasilania */
 				_write_power_status();
 			}
-			else if (!strcmp(cmd, "+POFF\n")) { /* Wyłącz zasilanie odroida po ~30 sekundach */
-
-			}
-			else if (!strcmp(cmd, "+BOFF\n")) { /* Wyłącz podświetlenie ekranu */
-
-			}
-			else if (!strcmp(cmd, "+BON\n")) { /* Włącz podświetlenie ekranu */
-
+			else if (!strncmp(cmd, "+SB:", 4)) { /* Jasność ekranu (1-255) */
+				uprintf("+DEBUG: %s", cmd);
+				_set_brightness(&cmd[4]);
 			}
 			else {
 				uprintf("+ERROR: Unknown command %s\n", cmd);
@@ -87,6 +105,10 @@ int main(void) {
 			oldignon = ignon;
 			oldradioon = radioon;
 			_write_power_status();
+
+			if (!radioon) {
+				cdcemu_radiopower_off();
+			}
 
 			if ((!ignon) && (!radioon)) {
 				power_display_set(DISABLE); /* Wyłączamy podświetlenie ekranu */
@@ -106,6 +128,7 @@ int main(void) {
 			/* Rozpoczynami odliczanie opóźnienia do odcięcia zasilania */
 			shutdown_time = rtc_time() + SHUTDOWN_DELAY;
 			while(rtc_time() < shutdown_time) {
+				IWDG_ReloadCounter();
 				//__WFE();
 			}
 
@@ -121,6 +144,7 @@ int main(void) {
 			while(1);
 		}
 
+		/* Obsługa pilota pod kierownica */
 		key = pilot_getkey();
 		if (oldkey != key) {
 			if ((key & PILOT_KEY_SOURCE_L) == PILOT_KEY_SOURCE_L) {
@@ -158,8 +182,9 @@ int main(void) {
 			oldkey = key;
 		}
 
-		cdcemu_loop();
-		displayemu_loop();
+		cdcemu_loop(); /* Pętla emulatora zmieniarki */
+		displayemu_loop(); /* Pętla emulatora wyświetlacza */
+		IWDG_ReloadCounter(); /* Watch dog */
 		//__WFE();
 	}
 }

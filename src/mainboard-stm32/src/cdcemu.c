@@ -7,7 +7,7 @@
 #include "usart.h"
 #include "rtc.h"
 
-#define RECV_TIMEOUT       40 /* Czas w * 10ms na potwierdzenie od HU (400ms) */
+#define RECV_TIMEOUT       10 /* Czas w * 10ms na potwierdzenie od HU (100ms) */
 #define QUEUE_LEN          32 /* Długośc kolejki odbieranych danych */
 #define PING_TIMEOUT      300 /* Czas, po którym uznajemy że coś się zawiesiło i resetujemy emulator */
 
@@ -378,13 +378,12 @@ void cdcemu_loop(void) {
 			}
 			//uprintf("+DEBUG:CDC: Got packet: id=%02x, len=%d, checksum=%02x, data[0]=%02x\n", buf[0], buf[2], checksum, buf[3]);
 
-
+			/* Wysyłamy potwierdzenie odbioru do HU */
+			_cdc_putc(0xC5);
 
 			if (buf[1] != last_frame_id) { /* Duplikaty, ignorujemy */
 				last_frame_id = buf[1];
 				_cdc_packet_recv(&buf[3], buf[2]);
-				/* Wysyłamy potwierdzenie odbioru do HU */
-				_cdc_putc(0xC5);
 			}
 		}
 	}
@@ -400,6 +399,11 @@ void cdcemu_loop(void) {
 
 		last_time = rtc_time();
 	}
+}
+
+/* Zatrzymujemy odtwarzanie po wyłączeniu radia */
+void cdcemu_radiopower_off(void) {
+	uprintf("+CDC:STOP\n");
 }
 
 /* Inicjalizacja sprzeu, zmieniarka podłączona do PA9 (TX) i PA10 (RX) USART1 */

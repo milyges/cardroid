@@ -317,7 +317,7 @@ void displayemu_init(void) {
 	can_initstruct.CAN_TTCM = DISABLE;
 	can_initstruct.CAN_ABOM = DISABLE;
 	can_initstruct.CAN_AWUM = DISABLE;
-	can_initstruct.CAN_NART = ENABLE;
+	can_initstruct.CAN_NART = ENABLE; // ???
 	can_initstruct.CAN_RFLM = ENABLE;
 	can_initstruct.CAN_TXFP = DISABLE;
 	can_initstruct.CAN_Mode = CAN_Mode_Normal;

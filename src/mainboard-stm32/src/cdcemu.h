@@ -36,5 +36,6 @@ enum ChangerEmulatorTrackState {
 void cdcemu_tick(void);
 void cdcemu_init(void);
 void cdcemu_loop(void);
+void cdcemu_radiopower_off(void);
 
 #endif /* __CDCEMU_H */

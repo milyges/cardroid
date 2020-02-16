@@ -12,8 +12,10 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.media.AudioManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.SystemClock;
+import android.provider.Settings;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -55,9 +57,7 @@ public class CarDroidService extends Service {
     /* Polecenia do mikrokontrolera */
     public static final String CMD_DISPLAY_REFRESH = "+DR";
     public static final String CMD_POWER_STATUS = "+PS";
-    public static final String CMD_POWER_OFF = "+POFF";
-    public static final String CMD_BACKLIGHT_OFF = "+BOFF";
-    public static final String CMD_BACKLIGHT_ON = "+BON";
+    public static final String CMD_POWER_BRIGHTNESS = "+SB:";
 
     /* Aplikacja do otwarzania muzyki */
     public final static String MEDIAPLAYER_PACKAGE = "com.musicplayer.playermusic";
@@ -79,6 +79,26 @@ public class CarDroidService extends Service {
     private AudioManager _audioManager = null;
     private String _mediaplayerRadioText = "";
     private boolean _a2dpPlaying = false;
+
+    /* Obsługa jasnosci ekranu */
+    private Handler _brightnessHandler;
+    private int _oldBrightness = 0;
+    private final Runnable _brightnessTask = new Runnable() {
+        @Override
+        public void run() {
+            try {
+                int b = Settings.System.getInt(getContentResolver(), Settings.System.SCREEN_BRIGHTNESS);
+                if (b != _oldBrightness) {
+                    _oldBrightness = b;
+                    //_log("_Brightness changed to " + b);
+                    _serial.sendCommand(CMD_POWER_BRIGHTNESS + b);
+                }
+            } catch (Settings.SettingNotFoundException e) {
+                e.printStackTrace();
+            }
+            _brightnessHandler.postDelayed(_brightnessTask, 500);
+        }
+    };
 
     private final BroadcastReceiver _bReceiver = new BroadcastReceiver() {
         @Override
@@ -106,6 +126,10 @@ public class CarDroidService extends Service {
                 String artist = intent.getStringExtra("artist");
                 if (artist == null) {
                     artist = "<unknown>";
+                }
+
+                if (track == null) {
+                    track = "<unknown>";
                 }
 
                 if (!artist.equals("<unknown>")) {
@@ -176,6 +200,7 @@ public class CarDroidService extends Service {
         }
     };
 
+
     class CarDroidSerial extends Thread {
         private RandomAccessFile _ttyFile = null;
 
@@ -211,6 +236,7 @@ public class CarDroidService extends Service {
                 try {
                     String line = _ttyFile.readLine();
 
+                    //_log("Received:" + line);
                     if (!line.isEmpty()) {
                         if (line.startsWith("+RADIOTEXT:")) {
                             _radioTextRecv(line.substring("+RADIOTEXT:".length()));
@@ -425,7 +451,7 @@ public class CarDroidService extends Service {
         if (text.equals("AUX         ")) {
             source = SOURCE_AUX;
         }
-        else if ((text.equals("CD          ")) || (text.equals("  LOAD CD   ")) || (text.equals("  READ CD   ")) ||
+        else if ((text.equals("CD          ")) || (text.startsWith("CD   TR ")) || (text.equals("  LOAD CD   ")) || (text.equals("  READ CD   ")) ||
                 (text.equals("   MP3 CD   ")) || (text.startsWith("ALB ")) || (text.startsWith("LOAD ALB ")) || (text.length() > 12)) {
             source = SOURCE_CD;
         }
@@ -486,6 +512,7 @@ public class CarDroidService extends Service {
         _serial = new CarDroidSerial();
         _serial.start();
         _radioText = "";
+        _brightnessHandler = new Handler();
     }
 
     @Override
@@ -523,10 +550,9 @@ public class CarDroidService extends Service {
         _bluetoothSetState(false);
 
         _bluetoothSetState(true);
+
+        _brightnessHandler.postDelayed(_brightnessTask, 1000);
         return super.onStartCommand(intent, flags, startId);
-
-
-
     }
 
     @Override
