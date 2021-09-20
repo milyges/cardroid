@@ -60,11 +60,11 @@ public class CarDroidService extends Service {
     public static final String CMD_POWER_BRIGHTNESS = "+SB:";
 
     /* Aplikacja do otwarzania muzyki */
-    public final static String MEDIAPLAYER_PACKAGE = "com.musicplayer.playermusic";
+    public final static String MEDIAPLAYER_PACKAGE = "com.spotify.music";
 
     /* Akcje łapane od playera */
-    public static final String ACTION_MEDIAPLAYER_METACHANGED = MEDIAPLAYER_PACKAGE + ".metachanged";
-    public static final String ACTION_MEDIAPLAYER_PLAYSTATECHANGED = MEDIAPLAYER_PACKAGE + ".playstatechanged";
+    public static final String ACTION_MEDIAPLAYER_METACHANGED = MEDIAPLAYER_PACKAGE + ".metadatachanged";
+    public static final String ACTION_MEDIAPLAYER_PLAYSTATECHANGED = MEDIAPLAYER_PACKAGE + ".playbackstatechanged";
     public static final String ACTION_MEDIAPLAYER_REFRESH = MEDIAPLAYER_PACKAGE + ".refresh";
 
     /* Akcje z "ukrytego" api od bluetooth */
@@ -147,6 +147,8 @@ public class CarDroidService extends Service {
                         _radioTextChanged(_mediaplayerRadioText, _radioSource);
                     }
                 }
+
+                //_log("_mediaplayerRadioText=" + _mediaplayerRadioText);
             }
             else if (A2DP_ACTION_PLAYING_STATE_CHANGED.equals(action)) {
                 int state = intent.getIntExtra(BluetoothProfile.EXTRA_STATE, A2DP_STATE_NOT_PLAYING);
@@ -226,7 +228,8 @@ public class CarDroidService extends Service {
             super.run();
             _log("Serial init.");
             try {
-                Runtime.getRuntime().exec("stty -F /dev/ttyS1 19200 -echo");
+                Runtime.getRuntime().exec("stty -F /dev/ttyS1 sane");
+                Runtime.getRuntime().exec("stty -F /dev/ttyS1 19200 -echo -iuclc -olcuc");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -256,6 +259,9 @@ public class CarDroidService extends Service {
                         else if (line.startsWith("+SHUTDOWN")) {
                             _log("Shutdown system.");
                             _shutdown();
+                        }
+                        else if (line.startsWith("+DEBUG:")) {
+                            Log.d("MainBoard", line.substring("+DEBUG:".length()));
                         }
                         else {
                             _log("Unknown data from mainboard:" + line);

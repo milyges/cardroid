@@ -8,9 +8,9 @@
 #define PILOT_KEY_LOAD       (1 << 2)
 #define PILOT_KEY_VOLUP      (1 << 3)
 #define PILOT_KEY_VOLDOWN    (1 << 4)
-#define PILOT_KEY_PAUSE      (PILOT_KEY_VOLUP | PILOT_KEY_VOLDOWN)
-#define PILOT_ROLL_NEXT      (1 << 5)
-#define PILOT_ROLL_PREV      (1 << 6)
+#define PILOT_KEY_PAUSE      (1 << 5)
+#define PILOT_ROLL_NEXT      (1 << 6)
+#define PILOT_ROLL_PREV      (1 << 7)
 
 uint8_t pilot_getkey(void);
 void pilot_init(void);

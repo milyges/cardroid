@@ -239,8 +239,9 @@ public class UIService extends Service {
         _windowManager = (WindowManager)getSystemService(WINDOW_SERVICE);
 
         p = new WindowManager.LayoutParams(
-                800, 64, 0, 0,
-                WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY,
+                800, 56, 0, 0,
+                //WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY,
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN |
                 WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.RGB_888);
@@ -259,7 +260,7 @@ public class UIService extends Service {
         _volumeWindowLayout = (LinearLayout) LayoutInflater.from(this).inflate(R.layout.volumewindow_layout, null);
         _volumeWindowParams = new WindowManager.LayoutParams(
                 600, 64, 0, 180,
-                WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY,
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN |
                         WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.RGB_888);
@@ -271,7 +272,7 @@ public class UIService extends Service {
         _menuWindowLayout = (LinearLayout)LayoutInflater.from(this).inflate(R.layout.menuwindow_layout, null);
         _menuWindowParams = new WindowManager.LayoutParams(
                 450, 275, 0, 60,
-                WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY,
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN |
                         WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.RGB_888);

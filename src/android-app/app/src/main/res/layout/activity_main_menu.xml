@@ -39,7 +39,7 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:padding="16dp"
-            android:text="Multimedia"
+            android:text="Spotify"
             android:textColor="@android:color/primary_text_dark"
             android:drawableTop="@drawable/menu_multimedia"
             style="@style/Widget.AppCompat.Button.Borderless"

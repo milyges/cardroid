@@ -19,7 +19,7 @@ public class MainMenuActivity extends Activity {
     private static final int REQUEST_CODE_CHECKOVERLAYPERM = 1000;
     private static final int REQUEST_CODE_FINELOCATION = 1001;
 
-    private final static String NAVIGATION_PACKAGE = "com.navigation.offlinemaps.gps";
+    private final static String NAVIGATION_PACKAGE = "com.google.android.apps.maps";
 
     private PowerManager.WakeLock _wakeLock;
 
